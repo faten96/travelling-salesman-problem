@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<!-- saved from url=(0063)http://visjs.org/examples/network/events/interactionEvents.html -->
+<html>
+
+	<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		    <title>Network | Interaction events</title>
+
+		    <script type="text/javascript" src="./Network _ Interaction events_files/vis.js.téléchargé"></script>
+		    <link href="./Network _ Interaction events_files/vis-network.min.css" rel="stylesheet" type="text/css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+		    <style type="text/css">
+		        #mynetwork {
+		            width: 81%;
+		            height: 350px;
+		            border: 3px solid lightgray;
+		        }
+                #mynetwork1 {
+                    width: 81%;
+                    height: 350px;
+                    border: 3px solid lightgray;
+                }
+                .button2 {
+                  background-color: white; 
+                  color: black; 
+                  border: 2px solid #008CBA;
+                }
+
+                .button2:hover {
+                  background-color: #008CBA;
+                  color: white;
+                }
+
+
+		    </style>
+            <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">-->
+	</head>
+
+	<body>
+
+
+				<h2>
+				    TP: Le problème du voyageur de commerce!
+				</h2>
+
+                <input type="button"  class="button button2" onclick="complet()" value="Creer Graphe complet     "> <br>
+                <h3>
+                    Nombre de ville... :)  <input type="text"  id="nb_nodes" name="nb_nodes">
+                    <input type="submit" class="button button2" onclick="create_graphe()" value="Ajouter les Noeuds "> 
+                     <br>
+                </h3>
+
+                <h3>
+                    Cout transport.... :)  <input type="text"  id="val_node">
+                    <input type="submit" class="button button2" onclick="submit()" value="Submit "> 
+                </h3>
+                
+                <h3>
+                    La ville de départ :)  <input type="text"  id="depart" name="depart">
+                    <input type="submit" class="button button2" onclick="executeTrivial()" value="Méthode Triviale "> 
+                    <input type="button" class="button button2"  onclick="executeGluton()" value="Méthode Glutonn "> <br>
+                </h3>
+                
+
+                 
+                
+                
+
+
+
+<div>
+            <div id="mynetwork">
+                 <div class="vis-network" tabindex="900" style="position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"><canvas width="600" height="400" style="position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"></canvas><div class="vis-manipulation" style="display: block;">
+                        <div class="vis-button vis-add" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                            <div class="vis-label">Add Node</div>
+                        </div>
+                        <div class="vis-separator-line"></div>
+                        <div class="vis-button vis-connect" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                            <div class="vis-label">Add Edge</div>
+                        </div>
+                    </div>
+                    <div class="vis-edit-mode" style="display: none;"></div><div class="vis-close" style="display: block; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                        
+                    </div>
+                </div>
+        </div>
+
+
+
+
+
+
+
+<div id="mynetwork1">
+                 <div class="vis-network" tabindex="900" style="position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"><canvas width="600" height="400" style="position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"></canvas><div class="vis-manipulation" style="display: block;">
+                        <div class="vis-button vis-add" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                            <div class="vis-label">Add Node</div>
+                        </div>
+                        <div class="vis-separator-line"></div>
+                        <div class="vis-button vis-connect" style="touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                            <div class="vis-label">Add Edge</div>
+                        </div>
+                    </div>
+                    <div class="vis-edit-mode" style="display: none;"></div><div class="vis-close" style="display: block; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+                        
+                    </div>
+                </div>
+        </div>
+        
+	</div>	
+        <pre id="eventSpan"></pre>
+
+		<script type="text/javascript">
+
+                    //Global variables 
+                    var nb_node=2;
+                    var nb_edge=1;
+                    var noeuds=[];
+                    var nbrNoeuds=1;
+                    var permut=[]; //pour contenir toutes les permutations possibles dans le cas trivial 
+                    var permuta=[];
+                    var tab=[]; //le tableau qui contient la permutation idéale
+                    var mark=[];
+                    var matrice;
+                    var matrice_b;
+                    var point_articulation=[];
+
+				    // create an array with nodes
+				    var nodes = new vis.DataSet([{id: 1, label: 'Node 1',color:{background:'#DAF7A6'}},]);
+				    // create an array with edges
+				    var edges = new vis.DataSet([
+		
+				    ]);
+
+				    // create a network
+				    var container = document.getElementById('mynetwork');
+
+				    var data = {
+
+				        nodes: nodes,
+				        edges: edges
+				    };
+
+				    var options = {
+                            physics:{enabled:false},
+							interaction:{hover:true},
+							manipulation:{
+
+                                                addNode:false,
+                                                deleteNode:false,
+							}
+					};
+						
+
+
+                    
+				    var network = new vis.Network(container, data, options);
+				   
+/////////////////////////////////////////////////////////////////////////
+
+
+
+  // create an array with nodes
+                    var nodes1 = new vis.DataSet([]);
+
+                    
+                    // create an array with edges
+                    var edges1 = new vis.DataSet([]);
+
+                    // create a network
+                    var container1 = document.getElementById('mynetwork1');
+
+                    var data1 = {
+                        nodes: nodes1,
+                        edges: edges1
+                    };
+
+                   
+ var options1 = {
+
+                            interaction:{hover:true},
+                            manipulation:{
+
+                                                addNode:false,
+                                                deleteNode:false,
+                            }
+                    };
+                        
+
+
+                    
+                    var network1 = new vis.Network(container1, data1, options1);
+
+                    var network = new vis.Network(container, data, options);
+                    network.on("selectEdge",(params)=>{
+                        selected_edge=params.edges[0];
+                        console.log(selected_edge);
+                    })
+                    
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+function submit()
+{
+    edges.update([{id:selected_edge, label:document.getElementById("val_node").value}])
+}
+
+
+
+
+
+				    network.on('click', function (properties) {
+				            var nodeID = properties.nodes[0];
+				            if (nodeID) {
+				                var clickedNode = this.body.nodes[nodeID];
+				                console.log('clicked node:', clickedNode.options.label);
+				               
+				            }
+				    });
+                     
+
+				    function addNode(){
+
+				    	nodes.add({id:nb_node,color:{background:'#DAF7A6'}, label:"node"+nb_node});
+				    	nb_node++;
+
+                        noeuds[nbrNoeuds]=nbrNoeuds+1;
+                        nbrNoeuds++;
+
+				    }
+
+                    function addEdge(i,j) {
+                        var int0=1;
+                        try {
+                            edges.add({
+                               // id: document.getElementById('edge-id').value,
+                                id: nb_edge,
+                                label: int0,
+                                from: i,
+                                to: j,
+                                color:{background:'#DAF7A6'}
+                            });
+                            nb_edge++;
+                            console.log('ajoutee');
+                        }
+                        catch (err) {
+                            alert(err);
+                        }
+                    }
+
+                    function executeTrivial()
+                    {
+                            //code simpliste
+                          /*/  var d =new Date();
+                            var temps=d.getTime();
+                            console.log(temps);*/
+                            var d = new Date();
+                            var n1=d.getTime();
+                            var result =Trivial_TSP(document.getElementById("depart").value);
+                            var d2 = new Date();
+                            var n2=d2.getTime();
+                            var temps=n2-n1;
+                            alert('La valeur optimale: '+result);
+                            alert('Le chemin: ' +tab);
+                            alert('Temps d execution: ' +temps + '  ms');
+                            
+                          //  alert('La valeur optimale: '+Trivial_TSP(document.getElementById("depart").value));
+                           // alert('Le chemin: ' +tab);
+
+                    }
+
+                    function Trivial_TSP(depart){
+
+                         matrice=get_graph_matrix();
+                         noeuds=[];
+                         noeuds[0]=depart; 
+                         var debut=parseInt(document.getElementById("depart").value); 
+
+                         //remplir le tableau à  permuter 
+                         for(var i=1;i<=nbrNoeuds;i++){
+
+                            if(depart!=i)  noeuds[i]=i;
+                            else noeuds[i]=0;
+                         }
+
+                         arrayUnset(noeuds,0);
+
+                         permut=[]; //initialiser au vide pour effacer les valeurs précédentes  
+                         anagramma(noeuds,1); //la variable permut contient toutes les permutations possibles 
+
+                         //ajouter à la fin de chaque permutaion la ville de départ 
+                         //faire une boucle pour ajouter à la fin de chaque permutation  ... le nbr de permutations est facto nbrNoeuds-1 
+                        var ind1=0,ind2=nbrNoeuds-1,b=0;
+                        var facto=fact(nbrNoeuds-1);
+
+                         for(var i=1;i<=facto;i++){
+
+                            for(var j=0;j<nbrNoeuds;j++){
+                                permuta[b]=permut[ind1];
+                                b++;
+                                ind1++;
+
+                            }
+                            permuta[b]=depart;
+                            b++;
+
+                         }
+                         console.log(permuta);
+                        
+                         
+                         //parcourir la variable permut et calculer le cout de chaque permutation et en retenir la plus petite 
+                         var cost=0; //le coût de chaque chemin 
+                         var minimum=5000; // la valeur du coût minimum 
+                         var i=0;
+                         var indice1=0, indice2=0,begin=0,end=nbrNoeuds;//pour parcourir le tableau permut 
+
+
+                         for(i=1;i<=facto;i++){
+
+                            var p=begin;
+                            for(var m=1;m<=nbrNoeuds;m++){
+                                console.log("okey");
+                                    indice1=permuta[p]-1;
+                                    indice2=permuta[p+1]-1;
+                                    cost=cost+matrice[indice1][indice2];
+                                    console.log("Le coût calculé: ",cost);
+                                    if (p==end-1) {
+                                        console.log("Le coût calculé: ",cost);
+
+                                        if (minimum>=cost) {
+                                            //on garde les permutaions 
+                                            //var tab=[];
+                                            var begin1=begin;
+                                            for(var t=0;t<nbrNoeuds;t++){
+                                                tab[t]=permuta[begin1];
+                                                begin1++;
+                                            }
+
+                                            minimum=cost;
+                                            //console.log("Minimum calculé: ",minimum);
+                                            cost=0; //pour calculer le nv coût 
+                                        }
+                                        cost=0;
+
+                                    }else p++; 
+                            }
+                            begin=begin+nbrNoeuds+1;
+                            end=end+nbrNoeuds+1;
+
+                         }
+                        
+                         return minimum; 
+
+                    }
+
+                    function fact(n){
+
+                        if(Math.round(n)==n){
+                            var i=1
+                            var entree=n;
+                            while(i<entree-1){
+                                n= n+n*i;
+                                i=i+1;
+                            }
+                            return n;
+                        }
+                        else{
+                            return undefined;
+                        }
+                    }   
+
+                    function find_edge_cost(node1,node2){
+
+                        var arc; 
+                        for(var i=1; i<=edges.length; i++){
+
+                                arc=edges.get(i); 
+                                
+                                if ((arc.from==node1 && arc.to==node2)) {
+                                    break;
+                                }
+                                if ((arc.from==node2 && arc.to==node1)) {
+                                    break;
+                                }
+                        }
+                        if (arc) {return arc.label ;}
+                        else return 0;
+                        
+
+                    }
+
+
+                    //supprimer une valeur d'un tableau
+                    function arrayUnset(array, value){
+                        array.splice(array.indexOf(value), 1);
+                    }
+
+                    
+
+                    function anagramma(Arr, first)
+                    {
+                        if ((Arr.length - first) <= 1)
+                        {
+                            permut=permut.concat(Arr);
+
+                        }
+                        else
+                        {
+                            for (var i = 0; i < Arr.length-first ; i++)
+                            {
+                                anagramma(anagramma_round(Arr, first), first+1);
+                            }
+                        }
+                    }
+                   
+                    function anagramma_round(Arr, i){
+                        var temp = Arr[i];
+                        for(var j=i;j < Arr.length-1;j++)
+                        {
+                            Arr[j] = Arr[j+1];
+                        }
+                        Arr[Arr.length-1] = temp;
+                        return Arr;
+                    }
+
+                    
+                    function get_graph_matrix() {
+                            
+                             // initialiser la matrice
+                            var arr = [];
+
+                            for (var i=0;i<nb_node-1;i++) {  arr[i] = []; }
+                            for (var i = 0; i <nb_node-1; i++) {
+                                
+                                for (var j = 0; j <nb_node-1; j++) {
+                                    arr[i][j] =0;	
+                                }
+
+                            }
+
+                            for (var j=0;j<nb_node-1;j++) {
+                                
+                                arr[j][j] =1; 
+                            }
+
+
+                            for (var k = 1; k < nb_node; k++) {
+                          
+                                var tab_nodes=network.getConnectedNodes(k);
+
+                                for (var i = 0; i < tab_nodes.length; i++) {
+                                	arr[tab_nodes[i]-1][k-1]= parseInt(find_edge_cost(tab_nodes[i],k));
+                                	arr[k-1][tab_nodes[i]-1]=parseInt(find_edge_cost(k,tab_nodes[i]));
+                                	
+                                }
+                            }
+
+                            return arr;
+                   }
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+var dernier=[];
+var cpt;
+var num_der;
+var somme;
+
+
+function executeGluton()
+                    {
+            
+
+
+            
+            nodes1 = new vis.DataSet([]);
+            edges1 = new vis.DataSet([]);
+            var data1 = {
+                        nodes: nodes1,
+                        edges: edges1
+                    };
+            network1 = new vis.Network(container1, data1, options1);
+
+         var gr=get_graph_matrix();
+         console.log(gr);
+         taille_tab=nb_node-1;
+         init_tab();
+            
+         
+            tab=gr;
+            somme=0;
+            var d = new Date();
+            var n1=d.getTime();
+                            
+                           
+                            
+            var t= ((taille_tab-1)*(taille_tab)/2);
+            for (var i = 0; i < t; i++) {
+                    min_tab();
+                    ajout_arc();
+                
+            }
+            var d2 = new Date();
+            var n2=d2.getTime();
+            var temps=n2-n1;
+            alert('Temps d execution: ' +temps + '  ms' );
+            afficher();
+            
+            console.log(somme);
+
+    
+    }
+
+
+
+function create_graphe(){
+     var nb_nodes=document.getElementById("nb_nodes").value;
+     nb_nodes++;
+     
+            for (var i = 2; i < nb_nodes; i++) {
+                addNode();
+               }
+               nb_node=nb_nodes;
+
+}
+
+function complet()
+{           var nb_nodes=document.getElementById("nb_nodes").value;
+            nb_nodes++;
+            for (var i = 1; i < nb_nodes; i++) {
+                for (var j = 1; j < nb_nodes ;j++) {
+                    if (i>j){addEdge(i,j)}
+
+                   
+                }
+            }
+
+}
+
+function submit()
+{
+    edges.update([{id:selected_edge, label:document.getElementById("val_node").value}])
+}
+
+function afficher()
+{
+            num_der=0;
+            for (var i = 0; i < taille_tab; i++) {
+                nodes1.add({id:i,color:{background:'#dfffdd'}, label:"node"+(i+1)});
+                for (var j = 0; j < taille_tab ;j++) {
+                    if ((j>i)&(graph[i][j]==1)){edges1.add({from: i, to: j, label: ""+tab[i][j]});}
+                    
+                }
+               
+
+            }
+
+
+            for (var i = 0; i < taille_tab; i++) {
+             
+        cpt=0;
+                for (var j = 0; j < taille_tab ;j++) {
+                    if ((graph[i][j]==1)){cpt++;}
+                    }
+                if (cpt==1){dernier[num_der]=i;num_der++;}
+
+            }
+            
+
+
+            edges1.add({from: dernier[0], to: dernier[1],color:{color:'red'}, label: ""+tab[(dernier[0])][(dernier[1])]});
+
+}
+
+
+
+
+
+
+
+
+
+
+var selected_edge;
+var taille_tab;
+var graph =[];
+var tab;
+
+
+
+function init_tab()
+{
+var arr = [];
+for (var i=0;i<taille_tab;i++) {arr[i] = [];}
+for (var i=0;i<taille_tab;i++) {graph[i] = [];}
+    for (var i=0;i<taille_tab;i++) {for (var j=0;j<taille_tab;j++) {graph[i][j] =0}}
+tab=arr;  
+
+}
+
+
+var position_i;
+var position_j;
+
+
+
+function min_tab(){
+    var min=10000000;
+    position_i=-1;
+    position_j=-1;
+
+for (var i = 0; i < taille_tab; i++) {
+    for (var j = i+1; j < taille_tab; j++) {
+        if((min>tab[i][j])&(graph[i][j]==0)){min=tab[i][j];position_i=i;position_j=j;}
+    }
+}
+
+
+}
+
+
+var faisable;
+
+function ajout_arc()
+
+{
+    var x=position_i;
+    var y=position_j;
+    faisable_ajout();
+    if (faisable==true) {graph[x][y]=1;graph[y][x]=1;somme=somme+tab[x][y];}
+    else{graph[x][y]=-1;graph[y][x]=-1;}
+}
+
+var mark=[];
+
+function faisable_ajout()
+{
+    faisable=true;
+    var cpt1=0;
+    var cpt2=0;
+    for (var i = 0; i < taille_tab; i++) {if (graph[position_i][i]==1){cpt1++;}}
+    for (var j = 0; j < taille_tab; j++) {if (graph[position_j][j]==1){cpt2++;}}
+        if(cpt1>1){faisable=false;}
+        if(cpt2>1){faisable=false;}
+    for (var i = 0; i < taille_tab; i++) {
+        mark[i]=0;
+            }
+    relier(position_i,position_j);
+
+}
+
+function relier( i, j)
+{
+    mark[i]=1;
+    if (graph[i][j]==1){faisable=false;}
+    else
+    {
+        for (var k = 0; k < taille_tab; k++) {
+           if ((graph[i][k]==1)&(mark[k]==0)){relier(k,j);}
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				</script>
+
+
+		</body>
+
+</html>
